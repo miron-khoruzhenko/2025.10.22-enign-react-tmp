@@ -6,12 +6,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import VerifyForm from "@/components/VerifyForm";
 import ResultCard from "@/components/ResultCard";
 import ActivateModal from "@/components/ActivateModal";
-import { SAMPLE_CODES, VerifyResult } from "@/lib/data";
+import {
+  SAMPLE_CODES,
+  VerifyResult,
+  PRESET_ACTIVATION_META,
+  ActivationMeta,
+} from "@/lib/data";
 
 export default function QRVerifyDemo() {
   const [serial, setSerial] = useState("");
   const [category, setCategory] = useState("");
   const [result, setResult] = useState<VerifyResult>(null);
+
+  // Activation meta (демо-хранилище)
+  const [activationMeta, setActivationMeta] = useState<Record<string, ActivationMeta>>(
+    PRESET_ACTIVATION_META
+  );
 
   // Activation modal state
   const [isModalOpen, setModalOpen] = useState(false);
@@ -81,7 +91,7 @@ export default function QRVerifyDemo() {
 
   // Final confirm: activate and clean screen
   async function handleConfirmActivate() {
-    if (!result?.info) return;
+    if (!result?.info || !result.code) return;
     setSubmitting(true);
 
     // Simulate request
@@ -93,7 +103,14 @@ export default function QRVerifyDemo() {
       status: "ACTIVATED" as const,
       note: `${dateStr} tarihinde etkinleştirildi`,
     };
+    // обновляем статус кода
     setResult({ ...result, info: updated });
+
+    // сохраняем метаданные владельца (для экрана проверки в будущем)
+    setActivationMeta((prev) => ({
+      ...prev,
+      [result.code!]: { firstName, lastName, phone },
+    }));
 
     setSubmitting(false);
     setModalOpen(false);
@@ -122,7 +139,10 @@ export default function QRVerifyDemo() {
       <div
         aria-hidden
         className="absolute inset-0 -z-10 opacity-20"
-        style={{ backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 10px, rgba(0,0,0,0) 10px 20px)" }}
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 10px, rgba(0,0,0,0) 10px 20px)",
+        }}
       />
 
       {/* Header */}
@@ -185,12 +205,13 @@ export default function QRVerifyDemo() {
                 category={category}
                 activatedNow={activatedNow}
                 onClickActivate={handleOpenModal}
+                activationMeta={activationMeta} // ← передаём метаданные владельца
               />
             </div>
           </motion.div>
 
           <div className="text-center text-xs text-neutral-300 mt-6">
-            © {new Date().getFullYear()} Savunma Doğrulama Portalı • "Güvenli ürün, güvenli систем"
+            © {new Date().getFullYear()} Savunma Doğrulama Portalı • "Güvenli ürün, güvenli sistem"
           </div>
         </div>
       </main>
@@ -221,7 +242,7 @@ export default function QRVerifyDemo() {
       {/* Footer KVKK */}
       <footer className="px-6 pb-8">
         <div className="mx-auto max-w-6xl text-[11px] leading-snug text-neutral-300">
-          KVKK: Bu demo arayüzde girilen kişisel veriler sadece gösterim amaçlıdır. Gerçek sistemde verileriniz; doğrulama güvenliği, sahtecilik önleme ve destek süreçleri için ilgili mevzuata uygun şekilde işlenir ve saklanır.
+          KVKK: Bu demo arayüzde girilen kişisel veriler sadece gösterim amaçlıdır. Gerçek sistemде verileriniz; doğrulama güvenliği, sahtecilik önleme ve destek süreçleri için ilgili mevzuata uygun şekilde işlenir ve saklanır.
         </div>
       </footer>
     </div>
