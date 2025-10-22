@@ -1,5 +1,4 @@
 // File: components/ActivateModal.tsx — personal info + KVKK + checkboxes + confirmation step
-import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export type ActivateModalProps = {

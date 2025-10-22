@@ -1,5 +1,4 @@
 // File: components/VerifyForm.tsx
-import React from "react";
 import { CATEGORIES } from "@/lib/data";
 
 export type VerifyFormProps = {

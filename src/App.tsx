@@ -1,7 +1,7 @@
 // File: app/QRVerifyDemo.tsx
 // Composed page using split components (DRY)
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import VerifyForm from "@/components/VerifyForm";
 import ResultCard from "@/components/ResultCard";

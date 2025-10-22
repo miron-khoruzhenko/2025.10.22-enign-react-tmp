@@ -1,5 +1,4 @@
 // File: components/ResultCard.tsx
-import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { VerifyResult, statusMeta, badgeColor } from "@/lib/data";
 
