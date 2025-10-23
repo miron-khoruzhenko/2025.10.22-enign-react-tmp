@@ -123,7 +123,7 @@ export default function QRVerifyDemo() {
         className="absolute inset-0 -z-10 blur-sm"
         style={{
           background:
-            "linear-gradient(160deg, #FFD100 0%, #FFD100 45%, #0055A4 45%, #0055A4 72%, #EF3340 72%, #EF3340 100%)",
+            "linear-gradient(90deg, rgba(0,0,0,0.4), rgba(0,0,0,0.4)), linear-gradient(160deg, #FFD100 0%, #FFD100 45%, #0055A4 45%, #0055A4 72%, #EF3340 72%, #EF3340 100%)", 
         }}
       />
       {/* Yumuşak doku */}

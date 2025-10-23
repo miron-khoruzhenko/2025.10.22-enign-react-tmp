@@ -12,29 +12,37 @@ export type CodeInfo = {
 
 export type VerifyResult = { code: string; info?: CodeInfo } | null;
 
+// export const CATEGORIES = [
+//   "Uniforma 1",
+//   "Uniforma 2",
+//   "Uniforma 3",
+//   "Taktik bot",
+//   "Plaka taşıyıcı",
+// ] as const;
+
 export const CATEGORIES = [
-  "Balistik yelek",
-  "Seramik plaka",
-  "Balistik kask",
-  "Taktik bot",
-  "Plaka taşıyıcı",
+  "Uniforma 1",
+  "Uniforma 2",
+  "Uniforma 3",
+  // "Taktik bot",
+  // "Plaka taşıyıcı",
 ] as const;
 
 export const SAMPLE_CODES: Record<string, CodeInfo> = {
   // UNUSED
-  "TR-BAL-001": { status: "UNUSED", product: "Balistik Yelek M12", category: "Balistik yelek" },
-  "TR-PLK-002": { status: "UNUSED", product: "Seramik Plaka S2", category: "Seramik plaka" },
-  "TR-KSK-003": { status: "UNUSED", product: "Balistik Kask K3", category: "Balistik kask" },
-  "TR-BOT-004": { status: "UNUSED", product: "Taktik Bot T4", category: "Taktik bot" },
-  "TR-PTC-005": { status: "UNUSED", product: "Plaka Taşıyıcı P5", category: "Plaka taşıyıcı" },
+  "TR-BAL-001": { status: "UNUSED", product: "Uniforma 1 M12", category: "Uniforma 1" },
+  "TR-PLK-002": { status: "UNUSED", product: "Uniforma 2 S2", category: "Uniforma 2" },
+  "TR-KSK-003": { status: "UNUSED", product: "Uniforma 3 K3", category: "Uniforma 3" },
+  // "TR-BOT-004": { status: "UNUSED", product: "Taktik Bot T4", category: "Taktik bot" },
+  // "TR-PTC-005": { status: "UNUSED", product: "Plaka Taşıyıcı P5", category: "Plaka taşıyıcı" },
 
   // ACTIVATED
-  "TR-PLK-777": { status: "ACTIVATED", product: "Seramik Plaka S4", category: "Seramik plaka", note: "10.10.2025 tarihinde etkinleştirildi" },
-  "TR-KSK-778": { status: "ACTIVATED", product: "Balistik Kask K7", category: "Balistik kask", note: "05.09.2025 tarihinde etkinleştirildi" },
+  "TR-PLK-777": { status: "ACTIVATED", product: "Uniforma 2 S4", category: "Uniforma 2", note: "10.10.2025 tarihinde etkinleştirildi" },
+  "TR-KSK-778": { status: "ACTIVATED", product: "Uniforma 3 K7", category: "Uniforma 3", note: "05.09.2025 tarihinde etkinleştirildi" },
 
   // BLOCKED
-  "TR-BOT-404": { status: "BLOCKED", product: "Taktik Bot T9", category: "Taktik bot", note: "Tedarikçi tarafından engellendi" },
-  "TR-BAL-999": { status: "BLOCKED", product: "Balistik Yelek M99", category: "Balistik yelek", note: "Seri iptal edildi" },
+  // "TR-BOT-404": { status: "BLOCKED", product: "Taktik Bot T9", category: "Taktik bot", note: "Tedarikçi tarafından engellendi" },
+  "TR-BAL-999": { status: "BLOCKED", product: "Uniforma 1 M99", category: "Uniforma 1", note: "Seri iptal edildi" },
 };
 
 export const statusMeta: Record<CodeStatus, { label: string; desc: string }> = {
