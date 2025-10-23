@@ -1,11 +1,12 @@
 // File: app/QRVerifyDemo.tsx
-// Composed page using split components (DRY)
+// Ecuador theme (TR): sarı-mavi-kırmızı, bayrak, metinler TR
 
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import VerifyForm from "@/components/VerifyForm";
 import ResultCard from "@/components/ResultCard";
 import ActivateModal from "@/components/ActivateModal";
+import EcuadorFlag from "@/components/EcuadorFlag";
 import {
   SAMPLE_CODES,
   VerifyResult,
@@ -18,27 +19,23 @@ export default function QRVerifyDemo() {
   const [category, setCategory] = useState("");
   const [result, setResult] = useState<VerifyResult>(null);
 
-  // Activation meta (демо-хранилище)
+  // Aktivasyon sahibi meta (demo)
   const [activationMeta, setActivationMeta] = useState<Record<string, ActivationMeta>>(
     PRESET_ACTIVATION_META
   );
 
-  // Activation modal state
+  // Modal state
   const [isModalOpen, setModalOpen] = useState(false);
-
-  // Form fields (modal)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [agreePolicy, setAgreePolicy] = useState(false);
   const [confirmAccuracy, setConfirmAccuracy] = useState(false);
-
-  // Modal UI state
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [confirmStep, setConfirmStep] = useState(false); // false: form, true: confirmation
+  const [confirmStep, setConfirmStep] = useState(false);
 
-  // Success toast and flag to suppress the "already activated" warning if activation just happened now
+  // Success-only davranışı
   const [successMsg, setSuccessMsg] = useState("");
   const [activatedNow, setActivatedNow] = useState(false);
 
@@ -52,7 +49,6 @@ export default function QRVerifyDemo() {
   }
 
   function handleOpenModal() {
-    // reset modal fields on open
     setFirstName("");
     setLastName("");
     setPhone("");
@@ -67,7 +63,6 @@ export default function QRVerifyDemo() {
     return /^\+?[0-9\s-]{10,14}$/.test(p);
   }
 
-  // Step 1 → Step 2 (validate), or Step 2 → Step 1 (edit)
   function handleSubmitFormStep() {
     if (!confirmStep) {
       if (!firstName || !lastName || !phone) {
@@ -85,28 +80,20 @@ export default function QRVerifyDemo() {
       setFormError("");
       setConfirmStep(true);
     } else {
-      setConfirmStep(false); // back to edit
+      setConfirmStep(false);
     }
   }
 
-  // Final confirm: activate and clean screen
   async function handleConfirmActivate() {
     if (!result?.info || !result.code) return;
     setSubmitting(true);
-
-    // Simulate request
     await new Promise((r) => setTimeout(r, 600));
 
     const dateStr = new Date().toLocaleDateString("tr-TR");
-    const updated = {
-      ...result.info!,
-      status: "ACTIVATED" as const,
-      note: `${dateStr} tarihinde etkinleştirildi`,
-    };
-    // обновляем статус кода
+    const updated = { ...result.info!, status: "ACTIVATED" as const, note: `${dateStr} tarihinde etkinleştirildi` };
     setResult({ ...result, info: updated });
 
-    // сохраняем метаданные владельца (для экрана проверки в будущем)
+    // Sahip meta kaydet
     setActivationMeta((prev) => ({
       ...prev,
       [result.code!]: { firstName, lastName, phone },
@@ -115,7 +102,7 @@ export default function QRVerifyDemo() {
     setSubmitting(false);
     setModalOpen(false);
 
-    // Show only success + clear form/result so «already activated» won't appear
+    // Sadece başarı + ekranı temizle
     setActivatedNow(true);
     setSuccessMsg("Ürün başarıyla etkinleştirildi!");
     setSerial("");
@@ -130,121 +117,139 @@ export default function QRVerifyDemo() {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
-      {/* Background */}
+      {/* Ecuador renkli arka plan */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10"
-        style={{ background: "linear-gradient(135deg, #2f3b22 0%, #222b1a 35%, #1c2416 70%, #12170e 100%)" }}
+        className="absolute inset-0 -z-10 blur-sm"
+        style={{
+          background:
+            "linear-gradient(160deg, #FFD100 0%, #FFD100 45%, #0055A4 45%, #0055A4 72%, #EF3340 72%, #EF3340 100%)",
+        }}
       />
+      {/* Yumuşak doku */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 opacity-20"
+        className="absolute inset-0 -z-10 opacity-15"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 10px, rgba(0,0,0,0) 10px 20px)",
+            "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.25) 0 8%, transparent 9%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.15) 0 10%, transparent 11%)",
         }}
       />
 
-      {/* Header */}
-      <header className="px-6 py-6 md:py-8">
-        <div className="mx-auto max-w-6xl flex items-center justify-between text-[#e8e8e8]">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl md:text-4xl" role="img" aria-label="military">
-              🪖
-            </span>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight">Savunma Doğrulama Portalı</h1>
-              <p className="text-sm md:text-base opacity-80">Güvenli ürün, güvenli sistem</p>
+      <div className="max-w-2xl mx-auto rounded-b-2xl  ring-black/10 min-h-screen flex flex-col justify-between px-4 py-4">
+
+        {/* Header */}
+        <header className="px-6 py-6 md:py-8 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10">
+          <div className="mx-auto max-w-6xl flex items-center justify-between text-neutral-900">
+            <div className="flex items-center gap-3">
+              <EcuadorFlag className="h-6 w-9 rounded-sm shadow-md" />
+              <div>
+                <h1 className="text-xl md:text-2xl font-extrabold tracking-tight">
+                  Ekvador Savunma Doğrulama Portalı
+                </h1>
+                <p className="text-sm md:text-base opacity-80">
+                  Güvenli ürün, güvenli sistem • Ekvador
+                </p>
+              </div>
             </div>
+            <div className="hidden md:block text-sm opacity-70">Ekvador için balistik ekipman doğrulama demosu</div>
           </div>
-          <div className="hidden md:block text-sm opacity-70">Balistik ekipman doğrulama demosu</div>
-        </div>
-      </header>
+        </header>
 
-      {/* Content panel (narrow) */}
-      <main className="px-4 pb-14">
-        <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="mx-auto w-full max-w-2xl bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10 p-6 md:p-8"
-          >
-            <div className="mb-6">
-              <h2 className="text-lg md:text-xl font-semibold tracking-tight text-neutral-900">Ürün Doğrulama</h2>
-              <p className="text-sm text-neutral-600 mt-1">
-                Seri numarasını girin ve kategori seçin. Örnek seri: <code>TR-BAL-001</code>
-              </p>
-            </div>
+        {/* Content panel (narrow) */}
+        <main className="">
+          <div className="mx-auto max-w-6xl">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="mx-auto w-full max-w-2xl bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10 p-6 md:p-8"
+            >
+              <div className="mb-6">
+                <h2 className="text-lg md:text-xl font-semibold tracking-tight text-neutral-900">
+                  Ürün Doğrulama (Ekvador)
+                </h2>
+                <p className="text-sm text-neutral-600 mt-1">
+                  Seri numarasını girin ve kategori seçin. Örnek seri: <code>TR-BAL-001</code>
+                </p>
+              </div>
 
-            {/* Success banner */}
-            <AnimatePresence>
-              {successMsg && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="mb-4 rounded-xl border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800"
-                >
-                  {successMsg}
-                </motion.div>
-              )}
-            </AnimatePresence>
+              {/* Success banner */}
+              <AnimatePresence>
+                {successMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="mb-4 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+                  >
+                    {successMsg}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            <VerifyForm
-              serial={serial}
-              category={category}
-              onChangeSerial={setSerial}
-              onChangeCategory={setCategory}
-              onSubmit={handleSubmitVerify}
-            />
-
-            <div className="mt-6 min-h-[180px]">
-              <ResultCard
-                result={result}
+              <VerifyForm
+                serial={serial}
                 category={category}
-                activatedNow={activatedNow}
-                onClickActivate={handleOpenModal}
-                activationMeta={activationMeta} // ← передаём метаданные владельца
+                onChangeSerial={setSerial}
+                onChangeCategory={setCategory}
+                onSubmit={handleSubmitVerify}
               />
-            </div>
-          </motion.div>
 
-          <div className="text-center text-xs text-neutral-300 mt-6">
-            © {new Date().getFullYear()} Savunma Doğrulama Portalı • "Güvenli ürün, güvenli sistem"
+              <div className="mt-6 min-h-[180px]">
+                <ResultCard
+                  result={result}
+                  category={category}
+                  activatedNow={activatedNow}
+                  onClickActivate={handleOpenModal}
+                  activationMeta={activationMeta}
+                />
+              </div>
+            </motion.div>
+
+
           </div>
-        </div>
-      </main>
+        </main>
 
-      <ActivateModal
-        open={isModalOpen}
-        code={result?.code}
-        product={result?.info?.product}
-        productCategory={result?.info?.category}
-        confirmStep={confirmStep}
-        firstName={firstName}
-        lastName={lastName}
-        phone={phone}
-        agreePolicy={agreePolicy}
-        confirmAccuracy={confirmAccuracy}
-        error={formError}
-        submitting={submitting}
-        onChangeFirst={setFirstName}
-        onChangeLast={setLastName}
-        onChangePhone={setPhone}
-        onToggleAgreePolicy={setAgreePolicy}
-        onToggleConfirmAccuracy={setConfirmAccuracy}
-        onClose={() => !submitting && setModalOpen(false)}
-        onSubmitForm={handleSubmitFormStep}
-        onConfirmActivate={handleConfirmActivate}
-      />
+        <ActivateModal
+          open={isModalOpen}
+          code={result?.code}
+          product={result?.info?.product}
+          productCategory={result?.info?.category}
+          confirmStep={confirmStep}
+          firstName={firstName}
+          lastName={lastName}
+          phone={phone}
+          agreePolicy={agreePolicy}
+          confirmAccuracy={confirmAccuracy}
+          error={formError}
+          submitting={submitting}
+          onChangeFirst={setFirstName}
+          onChangeLast={setLastName}
+          onChangePhone={setPhone}
+          onToggleAgreePolicy={setAgreePolicy}
+          onToggleConfirmAccuracy={setConfirmAccuracy}
+          onClose={() => !submitting && setModalOpen(false)}
+          onSubmitForm={handleSubmitFormStep}
+          onConfirmActivate={handleConfirmActivate}
+        />
 
-      {/* Footer KVKK */}
-      <footer className="px-6 pb-8">
-        <div className="mx-auto max-w-6xl text-[11px] leading-snug text-neutral-300">
-          KVKK: Bu demo arayüzde girilen kişisel veriler sadece gösterim amaçlıdır. Gerçek sistemде verileriniz; doğrulama güvenliği, sahtecilik önleme ve destek süreçleri için ilgili mevzuata uygun şekilde işlenir ve saklanır.
+
+        <div className="py-6 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10">
+          {/* KVKK (Ekvador temalı not) */}
+          <footer className="px-6">
+            <div className="mx-auto max-w-6xl text-[11px] leading-snug text-neutral-900/80">
+              KVKK: Bu demo arayüzde girilen kişisel veriler sadece gösterim amaçlıdır. Gerçek sistemde verileriniz; Ekvador’da
+              sunulan ürünlerin doğrulama güvenliği, sahtecilik önleme ve destek süreçleri için ilgili mevzuata uygun şekilde işlenir ve saklanır.
+            </div>
+
+          <div className="text-center text-xs text-neutral-800 mt-6 mt-6">
+            © {new Date().getFullYear()} Ekvador Savunma Doğrulama Portalı • “Güvenli ürün, güvenli sistem”
+          </div>
+          </footer>
         </div>
-      </footer>
+      </div>
+
     </div>
   );
 }
