@@ -28,3 +28,11 @@
 
 //? Lato
 // @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+
+html{
+	background: 
+		linear-gradient(90deg, rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
+		linear-gradient(160deg, #FFD100 0%, #FFD100 45%, #0055A4 45%, #0055A4 72%, #EF3340 72%, #EF3340 100%);
+	// background-color: black;
+	overflow: hidden;
+}

@@ -1,7 +1,7 @@
 // File: app/QRVerifyDemo.tsx
-// Ecuador theme (TR): sarı-mavi-kırmızı, bayrak, metinler TR
+// Ecuador theme (TR) + sessionStorage persistence for activations
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import VerifyForm from "@/components/VerifyForm";
 import ResultCard from "@/components/ResultCard";
@@ -12,16 +12,50 @@ import {
   VerifyResult,
   PRESET_ACTIVATION_META,
   ActivationMeta,
+  CodeStatus,
 } from "@/lib/data";
+
+// ---- sessionStorage keys ----
+const SKEY_META = "svd_activationMeta";
+const SKEY_OVERRIDES = "svd_statusOverrides";
+
+// Тип для переопределений статуса в сессии
+type StatusOverride = { status: CodeStatus; note?: string };
+type StatusOverridesMap = Record<string, StatusOverride>;
+
+// Утилиты для sessionStorage
+function loadJSON<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = sessionStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function saveJSON<T>(key: string, value: T) {
+  try {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch {
+    // ignore quota errors
+  }
+}
 
 export default function QRVerifyDemo() {
   const [serial, setSerial] = useState("");
   const [category, setCategory] = useState("");
   const [result, setResult] = useState<VerifyResult>(null);
 
-  // Aktivasyon sahibi meta (demo)
-  const [activationMeta, setActivationMeta] = useState<Record<string, ActivationMeta>>(
-    PRESET_ACTIVATION_META
+  // Aktivasyon sahibi meta (demo) — лениво гидратируем из sessionStorage
+  const [activationMeta, setActivationMeta] = useState<Record<string, ActivationMeta>>(() =>
+    ({ ...PRESET_ACTIVATION_META, ...loadJSON<Record<string, ActivationMeta>>(SKEY_META, {}) })
+  );
+
+  // Переопределения статусов (активации) по кодам — тоже из сессии
+  const [statusOverrides, setStatusOverrides] = useState<StatusOverridesMap>(() =>
+    loadJSON<StatusOverridesMap>(SKEY_OVERRIDES, {})
   );
 
   // Modal state
@@ -41,10 +75,31 @@ export default function QRVerifyDemo() {
 
   const normalized = useMemo(() => serial.trim().toUpperCase(), [serial]);
 
+  // Сохраняем изменения в сессию
+  useEffect(() => {
+    saveJSON(SKEY_META, activationMeta);
+  }, [activationMeta]);
+  useEffect(() => {
+    saveJSON(SKEY_OVERRIDES, statusOverrides);
+  }, [statusOverrides]);
+
   function handleSubmitVerify() {
     setSuccessMsg("");
     setActivatedNow(false);
-    const info = SAMPLE_CODES[normalized];
+
+    // 1) базовая запись из демо-списка
+    const base = SAMPLE_CODES[normalized];
+
+    // 2) применяем переопределение из сессии (если есть)
+    const override = statusOverrides[normalized];
+    const info = base
+      ? (override ? { ...base, ...override } : base)
+      : (override
+          // если вдруг кода нет в SAMPLE_CODES, но он есть в overrides (маловероятно для демо),
+          // соберём минимальную карточку
+          ? { status: override.status, product: "Bilinmeyen Ürün", category: "—", note: override.note }
+          : undefined);
+
     setResult({ code: normalized, info });
   }
 
@@ -90,14 +145,25 @@ export default function QRVerifyDemo() {
     await new Promise((r) => setTimeout(r, 600));
 
     const dateStr = new Date().toLocaleDateString("tr-TR");
-    const updated = { ...result.info!, status: "ACTIVATED" as const, note: `${dateStr} tarihinde etkinleştirildi` };
+    const noteText = `${dateStr} tarihinde etkinleştirildi`;
+
+    // Обновляем состояние результата (для текущей сессии рендера)
+    const updated = { ...result.info!, status: "ACTIVATED" as const, note: noteText };
     setResult({ ...result, info: updated });
 
-    // Sahip meta kaydet
-    setActivationMeta((prev) => ({
-      ...prev,
-      [result.code!]: { firstName, lastName, phone },
-    }));
+    // 1) Сохраняем метаданные владельца (в сессии)
+    setActivationMeta((prev) => {
+      const next = { ...prev, [result.code!]: { firstName, lastName, phone } };
+      // сохранится useEffect'ом
+      return next;
+    });
+
+    // 2) Сохраняем переопределение статуса (в сессии)
+    setStatusOverrides((prev) => {
+      const next = { ...prev, [result.code!]: { status: "ACTIVATED", note: noteText } };
+      // сохранится useEffect'ом
+      return next;
+    });
 
     setSubmitting(false);
     setModalOpen(false);
@@ -123,7 +189,7 @@ export default function QRVerifyDemo() {
         className="absolute inset-0 -z-10 blur-sm"
         style={{
           background:
-            "linear-gradient(90deg, rgba(0,0,0,0.4), rgba(0,0,0,0.4)), linear-gradient(160deg, #FFD100 0%, #FFD100 45%, #0055A4 45%, #0055A4 72%, #EF3340 72%, #EF3340 100%)", 
+            "linear-gradient(90deg, rgba(0,0,0,0.4), rgba(0,0,0,0.4)), linear-gradient(160deg, #FFD100 0%, #FFD100 45%, #0055A4 45%, #0055A4 72%, #EF3340 72%, #EF3340 100%)",
         }}
       />
       {/* Yumuşak doku */}
@@ -136,8 +202,7 @@ export default function QRVerifyDemo() {
         }}
       />
 
-      <div className="max-w-2xl mx-auto rounded-b-2xl  ring-black/10 min-h-screen flex flex-col justify-between px-4 py-4">
-
+      <div className="max-w-2xl mx-auto rounded-b-2xl ring-black/10 min-h-screen flex flex-col gap-6 justify-between px-4 py-4">
         {/* Header */}
         <header className="px-6 py-6 md:py-8 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10">
           <div className="mx-auto max-w-6xl flex items-center justify-between text-neutral-900">
@@ -152,7 +217,9 @@ export default function QRVerifyDemo() {
                 </p>
               </div>
             </div>
-            <div className="hidden md:block text-sm opacity-70">Ekvador için balistik ekipman doğrulama demosu</div>
+            <div className="hidden md:block text-sm opacity-70">
+              Ekvador için balistik ekipman doğrulama demosu
+            </div>
           </div>
         </header>
 
@@ -206,8 +273,6 @@ export default function QRVerifyDemo() {
                 />
               </div>
             </motion.div>
-
-
           </div>
         </main>
 
@@ -234,7 +299,6 @@ export default function QRVerifyDemo() {
           onConfirmActivate={handleConfirmActivate}
         />
 
-
         <div className="py-6 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10">
           {/* KVKK (Ekvador temalı not) */}
           <footer className="px-6">
@@ -243,13 +307,12 @@ export default function QRVerifyDemo() {
               sunulan ürünlerin doğrulama güvenliği, sahtecilik önleme ve destek süreçleri için ilgili mevzuata uygun şekilde işlenir ve saklanır.
             </div>
 
-          <div className="text-center text-xs text-neutral-800 mt-6 mt-6">
-            © {new Date().getFullYear()} Ekvador Savunma Doğrulama Portalı • “Güvenli ürün, güvenli sistem”
-          </div>
+            <div className="text-center text-xs text-neutral-800 mt-6">
+              © {new Date().getFullYear()} Ekvador Savunma Doğrulama Portalı • “Güvenli ürün, güvenli sistem”
+            </div>
           </footer>
         </div>
       </div>
-
     </div>
   );
 }
