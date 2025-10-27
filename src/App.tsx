@@ -103,13 +103,13 @@ export default function QRVerifyDemo() {
         ? { ...base, ...override }
         : base
       : override
-      ? {
+        ? {
           status: override.status,
           product: "Bilinmeyen Ürün",
           category: "—",
           note: override.note,
         }
-      : undefined;
+        : undefined;
 
     setResult({ code: normalized, info });
   }
@@ -224,6 +224,9 @@ export default function QRVerifyDemo() {
                 <p className="text-sm md:text-base opacity-80">{t("subtitle")}</p>
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center justify-end mt-2">
             <LanguageSwitcher />
           </div>
         </header>
