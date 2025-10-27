@@ -1,5 +1,5 @@
-// File: app/QRVerifyDemo.tsx
-// Ecuador theme (TR) + sessionStorage persistence for activations
+// File: src/App.tsx
+// Ecuador theme + i18n + sessionStorage persistence (React + Vite)
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,13 +7,16 @@ import VerifyForm from "@/components/VerifyForm";
 import ResultCard from "@/components/ResultCard";
 import ActivateModal from "@/components/ActivateModal";
 import EcuadorFlag from "@/components/EcuadorFlag";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import {
   SAMPLE_CODES,
   VerifyResult,
   PRESET_ACTIVATION_META,
   ActivationMeta,
   CodeStatus,
+  // CodeInfo,
 } from "@/lib/data";
+import { useI18n } from "@/components/LanguageProvider";
 
 // ---- sessionStorage keys ----
 const SKEY_META = "svd_activationMeta";
@@ -44,14 +47,17 @@ function saveJSON<T>(key: string, value: T) {
 }
 
 export default function QRVerifyDemo() {
+  const { t } = useI18n();
+
   const [serial, setSerial] = useState("");
   const [category, setCategory] = useState("");
   const [result, setResult] = useState<VerifyResult>(null);
 
   // Aktivasyon sahibi meta (demo) — лениво гидратируем из sessionStorage
-  const [activationMeta, setActivationMeta] = useState<Record<string, ActivationMeta>>(() =>
-    ({ ...PRESET_ACTIVATION_META, ...loadJSON<Record<string, ActivationMeta>>(SKEY_META, {}) })
-  );
+  const [activationMeta, setActivationMeta] = useState<Record<string, ActivationMeta>>(() => ({
+    ...PRESET_ACTIVATION_META,
+    ...loadJSON<Record<string, ActivationMeta>>(SKEY_META, {}),
+  }));
 
   // Переопределения статусов (активации) по кодам — тоже из сессии
   const [statusOverrides, setStatusOverrides] = useState<StatusOverridesMap>(() =>
@@ -93,12 +99,17 @@ export default function QRVerifyDemo() {
     // 2) применяем переопределение из сессии (если есть)
     const override = statusOverrides[normalized];
     const info = base
-      ? (override ? { ...base, ...override } : base)
-      : (override
-          // если вдруг кода нет в SAMPLE_CODES, но он есть в overrides (маловероятно для демо),
-          // соберём минимальную карточку
-          ? { status: override.status, product: "Bilinmeyen Ürün", category: "—", note: override.note }
-          : undefined);
+      ? override
+        ? { ...base, ...override }
+        : base
+      : override
+      ? {
+          status: override.status,
+          product: "Bilinmeyen Ürün",
+          category: "—",
+          note: override.note,
+        }
+      : undefined;
 
     setResult({ code: normalized, info });
   }
@@ -121,15 +132,15 @@ export default function QRVerifyDemo() {
   function handleSubmitFormStep() {
     if (!confirmStep) {
       if (!firstName || !lastName || !phone) {
-        setFormError("Lütfen ad, soyad ve telefon alanlarını doldurun");
+        setFormError(t("errFillAll"));
         return;
       }
       if (!validatePhone(phone)) {
-        setFormError("Telefon formatı geçersiz");
+        setFormError(t("errPhone"));
         return;
       }
       if (!agreePolicy || !confirmAccuracy) {
-        setFormError("Lütfen gerekli onay kutucuklarını işaretleyin");
+        setFormError(t("errChecks"));
         return;
       }
       setFormError("");
@@ -154,14 +165,12 @@ export default function QRVerifyDemo() {
     // 1) Сохраняем метаданные владельца (в сессии)
     setActivationMeta((prev) => {
       const next = { ...prev, [result.code!]: { firstName, lastName, phone } };
-      // сохранится useEffect'ом
       return next;
     });
 
     // 2) Сохраняем переопределение статуса (в сессии)
     setStatusOverrides((prev) => {
-      const next = { ...prev, [result.code!]: { status: "ACTIVATED", note: noteText } };
-      // сохранится useEffect'ом
+      const next = { ...prev, [result.code!]: { status: "ACTIVATED" as const, note: noteText } };
       return next;
     });
 
@@ -170,7 +179,7 @@ export default function QRVerifyDemo() {
 
     // Sadece başarı + ekranı temizle
     setActivatedNow(true);
-    setSuccessMsg("Ürün başarıyla etkinleştirildi!");
+    setSuccessMsg(t("activatedSuccess"));
     setSerial("");
     setCategory("");
     setResult(null);
@@ -182,11 +191,11 @@ export default function QRVerifyDemo() {
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden">
-      {/* Ecuador renkli arka plan */}
+    <div className="min-h-screen w-full relative overflow-x-hidden">
+      {/* Ecuador renkli arka plan — fixed чтобы не вылезал белый фон сбоку */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 blur-sm"
+        className="fixed inset-0 -z-10"
         style={{
           background:
             "linear-gradient(90deg, rgba(0,0,0,0.4), rgba(0,0,0,0.4)), linear-gradient(160deg, #FFD100 0%, #FFD100 45%, #0055A4 45%, #0055A4 72%, #EF3340 72%, #EF3340 100%)",
@@ -195,36 +204,32 @@ export default function QRVerifyDemo() {
       {/* Yumuşak doku */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 opacity-15"
+        className="fixed inset-0 -z-10 opacity-15 pointer-events-none"
         style={{
           backgroundImage:
             "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.25) 0 8%, transparent 9%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.15) 0 10%, transparent 11%)",
         }}
       />
 
-      <div className="max-w-2xl mx-auto rounded-b-2xl ring-black/10 min-h-screen flex flex-col gap-6 justify-between px-4 py-4">
+      <div className="max-w-2xl mx-auto rounded-b-2xl min-h-screen flex flex-col gap-6 justify-between px-4 py-4">
         {/* Header */}
-        <header className="px-6 py-6 md:py-8 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10">
+        <header className="px-6 py-6 md:py-8 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10 z-10">
           <div className="mx-auto max-w-6xl flex items-center justify-between text-neutral-900">
             <div className="flex items-center gap-3">
               <EcuadorFlag className="h-6 w-9 rounded-sm shadow-md" />
               <div>
                 <h1 className="text-xl md:text-2xl font-extrabold tracking-tight">
-                  Ekvador Savunma Doğrulama Portalı
+                  {t("title")}
                 </h1>
-                <p className="text-sm md:text-base opacity-80">
-                  Güvenli ürün, güvenli sistem • Ekvador
-                </p>
+                <p className="text-sm md:text-base opacity-80">{t("subtitle")}</p>
               </div>
             </div>
-            <div className="hidden md:block text-sm opacity-70">
-              Ekvador için balistik ekipman doğrulama demosu
-            </div>
+            <LanguageSwitcher />
           </div>
         </header>
 
         {/* Content panel (narrow) */}
-        <main className="">
+        <main>
           <div className="mx-auto max-w-6xl">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -234,10 +239,10 @@ export default function QRVerifyDemo() {
             >
               <div className="mb-6">
                 <h2 className="text-lg md:text-xl font-semibold tracking-tight text-neutral-900">
-                  Ürün Doğrulama (Ekvador)
+                  {t("pageSectionTitle")}
                 </h2>
                 <p className="text-sm text-neutral-600 mt-1">
-                  Seri numarasını girin ve kategori seçin. Örnek seri: <code>TR-BAL-001</code>
+                  {t("pageSectionHint")} <code>TR-BAL-001</code>
                 </p>
               </div>
 
@@ -276,6 +281,7 @@ export default function QRVerifyDemo() {
           </div>
         </main>
 
+        {/* Modal */}
         <ActivateModal
           open={isModalOpen}
           code={result?.code}
@@ -299,16 +305,14 @@ export default function QRVerifyDemo() {
           onConfirmActivate={handleConfirmActivate}
         />
 
+        {/* Footer */}
         <div className="py-6 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-2xl shadow-2xl ring-1 ring-black/10">
-          {/* KVKK (Ekvador temalı not) */}
           <footer className="px-6">
             <div className="mx-auto max-w-6xl text-[11px] leading-snug text-neutral-900/80">
-              KVKK: Bu demo arayüzde girilen kişisel veriler sadece gösterim amaçlıdır. Gerçek sistemde verileriniz; Ekvador’da
-              sunulan ürünlerin doğrulama güvenliği, sahtecilik önleme ve destek süreçleri için ilgili mevzuata uygun şekilde işlenir ve saklanır.
+              {t("demoNote")}
             </div>
-
             <div className="text-center text-xs text-neutral-800 mt-6">
-              © {new Date().getFullYear()} Ekvador Savunma Doğrulama Portalı • “Güvenli ürün, güvenli sistem”
+              © {new Date().getFullYear()} {t("footer")}
             </div>
           </footer>
         </div>

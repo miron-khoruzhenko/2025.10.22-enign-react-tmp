@@ -1,64 +1,49 @@
-// File: lib/data.ts
-// Types, sample dataset, categories and small helpers (DRY)
+// File: src/lib/data.ts
+// Types, sample dataset, categories (as keys) + i18n helpers (DRY)
+
+// import type { Lang } from "./i18n";
+
+// ---------------- Types ----------------
 
 export type CodeStatus = "UNUSED" | "ACTIVATED" | "BLOCKED";
+
+// Категории храним как ключи, чтобы значение не зависело от языка UI.
+export const CATEGORY_KEYS = ["uniform1", "uniform2", "uniform3"] as const;
+export type CategoryKey = (typeof CATEGORY_KEYS)[number] | string;
 
 export type CodeInfo = {
   status: CodeStatus;
   product: string;
-  category: string; // ek kontrol için
+  category: CategoryKey; // internal key; отображение — через i18n
   note?: string;
 };
 
 export type VerifyResult = { code: string; info?: CodeInfo } | null;
 
-// export const CATEGORIES = [
-//   "Uniforma 1",
-//   "Uniforma 2",
-//   "Uniforma 3",
-//   "Taktik bot",
-//   "Plaka taşıyıcı",
-// ] as const;
-
-export const CATEGORIES = [
-  "Uniforma 1",
-  "Uniforma 2",
-  "Uniforma 3",
-  // "Taktik bot",
-  // "Plaka taşıyıcı",
-] as const;
+// ---------------- Sample categories & codes (keys) ----------------
 
 export const SAMPLE_CODES: Record<string, CodeInfo> = {
   // UNUSED
-  "TR-BAL-001": { status: "UNUSED", product: "Uniforma 1 M12", category: "Uniforma 1" },
-  "TR-PLK-002": { status: "UNUSED", product: "Uniforma 2 S2", category: "Uniforma 2" },
-  "TR-KSK-003": { status: "UNUSED", product: "Uniforma 3 K3", category: "Uniforma 3" },
-  // "TR-BOT-004": { status: "UNUSED", product: "Taktik Bot T4", category: "Taktik bot" },
-  // "TR-PTC-005": { status: "UNUSED", product: "Plaka Taşıyıcı P5", category: "Plaka taşıyıcı" },
+  "TR-BAL-001": { status: "UNUSED", product: "Uniforma 1 M12", category: "uniform1" },
+  "TR-PLK-002": { status: "UNUSED", product: "Uniforma 2 S2", category: "uniform2" },
+  "TR-KSK-003": { status: "UNUSED", product: "Uniforma 3 K3", category: "uniform3" },
+  "TR-KSK-004": { status: "UNUSED", product: "Uniforma 1 K3", category: "uniform1" },
+  "TR-KSK-005": { status: "UNUSED", product: "Uniforma 1 K31", category: "uniform1" },
+  "TR-KSK-006": { status: "UNUSED", product: "Uniforma 1 K43", category: "uniform1" },
+  "TR-KSK-007": { status: "UNUSED", product: "Uniforma 1 K32", category: "uniform1" },
+  "TR-KSK-008": { status: "UNUSED", product: "Uniforma 1 K33", category: "uniform1" },
+  "TR-KSK-009": { status: "UNUSED", product: "Uniforma 1 K35", category: "uniform1" },
+  "TR-KSK-010": { status: "UNUSED", product: "Uniforma 1 K6", category: "uniform1" },
 
   // ACTIVATED
-  "TR-PLK-777": { status: "ACTIVATED", product: "Uniforma 2 S4", category: "Uniforma 2", note: "10.10.2025 tarihinde etkinleştirildi" },
-  "TR-KSK-778": { status: "ACTIVATED", product: "Uniforma 3 K7", category: "Uniforma 3", note: "05.09.2025 tarihinde etkinleştirildi" },
+  "TR-PLK-777": { status: "ACTIVATED", product: "Uniforma 2 S4", category: "uniform2", note: "10.10.2025 tarihinde etkinleştirildi" },
+  "TR-KSK-778": { status: "ACTIVATED", product: "Uniforma 3 K7", category: "uniform3", note: "05.09.2025 tarihinde etkinleştirildi" },
 
   // BLOCKED
-  // "TR-BOT-404": { status: "BLOCKED", product: "Taktik Bot T9", category: "Taktik bot", note: "Tedarikçi tarafından engellendi" },
-  "TR-BAL-999": { status: "BLOCKED", product: "Uniforma 1 M99", category: "Uniforma 1", note: "Seri iptal edildi" },
+  "TR-BAL-999": { status: "BLOCKED", product: "Uniforma 1 M99", category: "uniform1", note: "Seri iptal edildi" },
 };
 
-export const statusMeta: Record<CodeStatus, { label: string; desc: string }> = {
-  UNUSED: {
-    label: "Orijinal: etkinleştirilmedi",
-    desc: "Kod bulundu. Satın alımda etkinleştirilebilir.",
-  },
-  ACTIVATED: {
-    label: "Kod zaten etkinleştirildi",
-    desc: "Bu ürün daha önce doğrulandı.",
-  },
-  BLOCKED: {
-    label: "Kod engellendi",
-    desc: "Lütfen satıcı veya destek ile iletişime geçin.",
-  },
-};
+// ---------------- UI helpers ----------------
 
 export function badgeColor(status: CodeStatus) {
   switch (status) {
@@ -69,6 +54,37 @@ export function badgeColor(status: CodeStatus) {
     case "BLOCKED":
       return "bg-red-100 text-red-800 ring-red-300";
   }
+}
+
+// Локализованные подписи для статусов
+export function getStatusMeta(t: (k: string) => string): Record<
+  CodeStatus,
+  { label: string; desc: string }
+> {
+  return {
+    UNUSED: {
+      label: t("status.UNUSED.label"),
+      desc: t("status.UNUSED.desc"),
+    },
+    ACTIVATED: {
+      label: t("status.ACTIVATED.label"),
+      desc: t("status.ACTIVATED.desc"),
+    },
+    BLOCKED: {
+      label: t("status.BLOCKED.label"),
+      desc: t("status.BLOCKED.desc"),
+    },
+  };
+}
+
+// Локализация категорий
+export function categoryLabel(t: (k: string) => string, key: CategoryKey): string {
+  return t(`category.${key}`);
+}
+
+// Опции для dropdown: value = ключ, label = локализованный текст
+export function getCategoryOptions(t: (k: string) => string): Array<{ value: CategoryKey; label: string }> {
+  return CATEGORY_KEYS.map((k) => ({ value: k, label: categoryLabel(t, k) }));
 }
 
 // ---------------- Activation owner meta (for demo) ----------------
@@ -86,7 +102,6 @@ export const PRESET_ACTIVATION_META: Record<string, ActivationMeta> = {
 };
 
 // Маскирование: первые 2 буквы видны, далее звёздочки.
-// Если строка короче 2 — показываем как есть + звёздочки.
 export function maskFirstTwo(value: string): string {
   const v = (value || "").trim();
   if (!v) return "****";
